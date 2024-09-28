@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.sercan.yigit.weros_health_app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.sercan.yigit.weros_health_app"
