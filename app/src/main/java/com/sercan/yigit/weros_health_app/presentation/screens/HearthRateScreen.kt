@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -21,9 +20,6 @@ fun HearthRateScreen(viewModel: MainViewModel) {
         modifier = Modifier.fillMaxWidth().padding(16.dp),
     ) {
         val getHearRate = viewModel.getHeartRate.observeAsState()
-        AnimatedHeartRateItem(
-            heartRate = getHearRate.value ?: 0,
-            modifier = Modifier.size(150.dp)
-        )
+        AnimatedHeartRateItem(heartRate = getHearRate.value ?: 0)
     }
 }

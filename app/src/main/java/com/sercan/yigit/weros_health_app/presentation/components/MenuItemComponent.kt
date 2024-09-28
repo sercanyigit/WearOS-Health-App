@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,9 +30,13 @@ import com.sercan.yigit.weros_health_app.data.model.MenuListModel
 fun MenuItemComponent(navController: NavController, menuItem: MenuListModel) {
     Card(
         onClick = { navController.navigate(menuItem.navigateScreen) },
-        modifier = Modifier.fillMaxWidth().padding(start = 15.dp, end = 15.dp).border(width = 1.dp, color = MaterialTheme.colors.primary,
-            shape = RoundedCornerShape(30.dp)
-        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 15.dp, end = 15.dp)
+            .border(
+                width = 1.dp, color = MaterialTheme.colors.primary,
+                shape = RoundedCornerShape(30.dp)
+            ),
         contentColor = Color.Black,
         shape = RoundedCornerShape(30.dp)
     ) {
@@ -61,7 +64,10 @@ fun MenuItemComponent(navController: NavController, menuItem: MenuListModel) {
 @Preview
 @Composable
 fun MenuItemComponentPreview() {
-    MenuItemComponent(navController = NavController(LocalContext.current), MockData.menuList.first())
+    MenuItemComponent(
+        navController = NavController(LocalContext.current),
+        MockData.menuList.first()
+    )
 }
 
 
