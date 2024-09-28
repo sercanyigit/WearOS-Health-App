@@ -7,6 +7,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
+import com.sercan.yigit.weros_health_app.presentation.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -27,11 +28,11 @@ class SensorManagerHelper(private val context: Context, private val listener: Se
         sensorManager.unregisterListener(listener)
     }
 
-    fun handleSensorEvent(event: SensorEvent?) {
+    fun handleSensorEvent(event: SensorEvent?, viewModel: MainViewModel) {
         event?.let {
             when (it.sensor.type) {
-                Sensor.TYPE_HEART_RATE -> it.values[0].toInt()
-                Sensor.TYPE_STEP_COUNTER -> it.values[0].toInt()
+                Sensor.TYPE_HEART_RATE -> viewModel.setHeartRate(it.values[0].toInt())
+                Sensor.TYPE_STEP_COUNTER -> viewModel.setSteps(it.values[0].toInt())
                 Sensor.TYPE_STEP_DETECTOR -> Log.d(TAG, "STEP DETECTED at ${currentTimeStr()}")
                 else -> Log.d(TAG, "Unknown sensor type")
             }

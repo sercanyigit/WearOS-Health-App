@@ -1,73 +1,95 @@
-/* While this template provides a good starting point for using Wear Compose, you can always
- * take a look at https://github.com/android/wear-os-samples/tree/main/ComposeStarter and
- * https://github.com/android/wear-os-samples/tree/main/ComposeAdvanced to find the most up to date
- * changes to the libraries and their usages.
- */
-
 package com.sercan.yigit.weros_health_app.presentation
 
+import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.os.Bundle
+import android.os.PowerManager
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
-import androidx.wear.tooling.preview.devices.WearDevices
-import com.sercan.yigit.weros_health_app.R
-import com.sercan.yigit.weros_health_app.presentation.theme.WerOSHealthAppTheme
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import com.sercan.yigit.weros_health_app.helper.PermissionManager
+import com.sercan.yigit.weros_health_app.helper.SensorManagerHelper
+import com.sercan.yigit.weros_health_app.navigation.AppNavigation
+import com.sercan.yigit.weros_health_app.presentation.theme.WearOSHealthAppTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), SensorEventListener {
+    private lateinit var sensorManagerHelper: SensorManagerHelper
+    private lateinit var permissionManager: PermissionManager
+    private lateinit var wakeLock: PowerManager.WakeLock
+    private val mainViewModel by viewModels<MainViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
-
         super.onCreate(savedInstanceState)
-
         setTheme(android.R.style.Theme_DeviceDefault)
 
+        initScreen()
         setContent {
-            WearApp("Android")
+            WearOSHealthAppTheme {
+                val navController = rememberSwipeDismissableNavController()
+                AppNavigation(navController, viewModel = mainViewModel)
+            }
         }
     }
-}
 
-@Composable
-fun WearApp(greetingName: String) {
-    WerOSHealthAppTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            contentAlignment = Alignment.Center
-        ) {
-            TimeText()
-            Greeting(greetingName = greetingName)
+    private fun initScreen() {
+        wakeLock = createWakeLock()
+        permissionManager = PermissionManager(this)
+        sensorManagerHelper = SensorManagerHelper(this, this)
+
+        if (!permissionManager.hasPermissions()) {
+            permissionManager.requestPermissions()
+        } else {
+            sensorManagerHelper.registerSensors()
         }
     }
-}
 
-@Composable
-fun Greeting(greetingName: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
-    )
-}
+    override fun onSensorChanged(event: SensorEvent?) {
+        sensorManagerHelper.handleSensorEvent(event, viewModel = mainViewModel)
+    }
 
-@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
-@Composable
-fun DefaultPreview() {
-    WearApp("Preview Android")
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        Log.d(TAG, "onAccuracyChanged - accuracy: $accuracy")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManagerHelper.unregisterSensors()
+        if (wakeLock.isHeld) {
+            wakeLock.release()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!wakeLock.isHeld) {
+            wakeLock.acquire()
+        }
+        sensorManagerHelper.registerSensors()
+    }
+
+    @SuppressLint("MissingSuperCall")
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<String>, grantResults: IntArray
+    ) {
+        permissionManager.handlePermissionsResult(requestCode, grantResults) {
+            sensorManagerHelper.registerSensors()
+        }
+    }
+
+    @SuppressLint("InvalidWakeLockTag")
+    private fun createWakeLock(): PowerManager.WakeLock {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return powerManager.newWakeLock(
+            PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+            "WearOs-HealthApp"
+        )
+    }
 }
